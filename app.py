@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import time
+import asyncio
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.prompts import PromptTemplate
@@ -8,6 +9,7 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
 from dotenv import load_dotenv
+import pandas as pd
 
 # Set up environment variables
 load_dotenv()
@@ -15,6 +17,7 @@ os.environ['GOOGLE_API_KEY'] = os.getenv("GOOGLE_API_KEY")
 groq_api_key = os.getenv("GROQ_API_KEY")
 
 # Streamlit UI setup
+df = pd.read_json("hf://datasets/viber1/indian-law-dataset/train.jsonl", lines=True)
 st.set_page_config(page_title="LawGPT")
 col1, col2, col3 = st.columns([1, 4, 1])
 st.title("Llama Model Legal ChatBot")
@@ -52,6 +55,13 @@ if "messages" not in st.session_state:
 
 if "memory" not in st.session_state:
     st.session_state.memory = ConversationBufferWindowMemory(k=2, memory_key="chat_history", return_messages=True)
+
+
+# Ensure an event loop exists for async dependencies
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
 
 # Initialize embeddings and vector store
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
